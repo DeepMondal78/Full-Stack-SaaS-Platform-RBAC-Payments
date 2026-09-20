@@ -50,7 +50,7 @@ export default function ProductsPage() {
         body: JSON.stringify({
           name,
           price: parseFloat(price),
-          quantity: parseInt(quantity),
+          quantity: parseInt(quantity, 10), // Ekhane stock er bodole quantity hobe
         }),
       });
 

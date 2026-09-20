@@ -8,4 +8,7 @@ import com.example.demo.model.User;
 
 public interface UserRepository extends MongoRepository<User, String> {
     Optional<User> findByEmail(String email);
+    
+    // Ei method ti add kore din
+    boolean existsByEmail(String email);
 }

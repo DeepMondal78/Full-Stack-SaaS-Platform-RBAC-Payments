@@ -22,14 +22,23 @@ export default function RegisterPage() {
         body: JSON.stringify({ name, email, password }),
       });
 
+      const data = await res.json();
+
       if (res.ok) {
-        alert("Registration Successful! Please login.");
-        router.push("/login"); // Register seshe login page-e niye jabe
+        // Optional: Chaile register-er sathe sathe token save kore direct dashboard/products-e pathiye dite paren, 
+        // ba current flow- moto login page-eo pathate paren.
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("role", data.role);
+
+        alert("Registration Successful!");
+        router.push("/products"); 
       } else {
-        alert("Registration failed. Email might already exist.");
+        // Backend theke asha exact error message dekhabe
+        alert(typeof data === "string" ? data : data.message || "Registration failed.");
       }
     } catch (err) {
       console.error("Registration error:", err);
+      alert("Something went wrong. Please check if backend is running.");
     } finally {
       setLoading(false);
     }

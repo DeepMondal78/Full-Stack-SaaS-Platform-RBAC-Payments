@@ -10,7 +10,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleLogin = async (e: React.FormEvent) => {
+ const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
@@ -21,14 +21,21 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
+      const data = await res.json();
+
       if (res.ok) {
+        // Backend theke asha JWT token ebong role save kora
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("role", data.role);
+
         alert("Login Successful!");
-        router.push("/products"); // Login seshe products dashboard-e niye jabe
+        router.push("/products"); 
       } else {
-        alert("Invalid credentials!");
+        alert(data.message || "Invalid credentials!");
       }
     } catch (err) {
       console.error("Login error:", err);
+      alert("Something went wrong. Please check if backend is running.");
     } finally {
       setLoading(false);
     }

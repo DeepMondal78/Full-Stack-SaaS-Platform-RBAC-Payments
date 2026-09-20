@@ -1,17 +1,19 @@
 package com.example.demo.controller;
 
-import java.util.Optional;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
+import com.example.demo.dto.AuthResponse;
+import com.example.demo.dto.LoginRequest;
+import com.example.demo.dto.RegisterRequest;
 import com.example.demo.model.User;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.security.JwtUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
+
+
 
 @RestController
 @RequestMapping("/api/auth")
@@ -21,33 +23,49 @@ public class AuthController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
     // Register Endpoint
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody User user) {
+    public ResponseEntity<?> registerUser(@RequestBody RegisterRequest request) {
         // Check if email already exists
-        Optional<User> existingUser = userRepository.findByEmail(user.getEmail());
-        if (existingUser.isPresent()) {
+        if (userRepository.existsByEmail(request.getEmail())) {
             return ResponseEntity.badRequest().body("Error: Email is already in use!");
         }
 
-        // Save user to MongoDB
+        User user = new User();
+        user.setName(request.getName());
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword())); // Encrypt password
+        user.setRole("ROLE_USER"); // Default role
+
         User savedUser = userRepository.save(user);
-        return ResponseEntity.ok(savedUser);
+
+        // Generate JWT Token
+        String token = jwtUtil.generateToken(savedUser.getEmail());
+        
+        return ResponseEntity.ok(new AuthResponse(token, "User registered successfully!", savedUser.getRole()));
     }
 
     // Login Endpoint
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@RequestBody User loginRequest) {
+    public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest) {
         Optional<User> userOpt = userRepository.findByEmail(loginRequest.getEmail());
         
         if (userOpt.isPresent()) {
             User user = userOpt.get();
-            // Simple password check (Production-e BCrypt use kora uchit)
-            if (user.getPassword().equals(loginRequest.getPassword())) {
-                return ResponseEntity.ok(user);
+            
+            // Verify password using BCrypt
+            if (passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+                // Generate JWT Token
+                String token = jwtUtil.generateToken(user.getEmail());
+                return ResponseEntity.ok(new AuthResponse(token, "Login successful!", user.getRole()));
             }
         }
         
-        return ResponseEntity.status(401).body("Invalid email or password!");
+        return ResponseEntity.status(401).body("Error: Invalid email or password!");
     }
 }

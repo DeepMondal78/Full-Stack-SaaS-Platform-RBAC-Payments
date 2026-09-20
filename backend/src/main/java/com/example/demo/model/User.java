@@ -10,6 +10,7 @@ public class User {
     private String name;
     private String email;
     private String password; // Note: Production-e password encode kore rakha bhalo
+    private String role;
 
     // Getters and Setters
     public String getId() { return id; }
@@ -23,4 +24,6 @@ public class User {
 
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
+    public String getRole() { return role; }          // Ei getter ti add korun
+    public void setRole(String role) { this.role = role; } // Ei setter ti add korun
 }
